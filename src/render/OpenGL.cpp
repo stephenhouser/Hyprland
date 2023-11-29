@@ -1937,6 +1937,8 @@ void CHyprOpenGLImpl::createBGTextureForMonitor(CMonitor* pMonitor) {
 
     const auto         FORCEWALLPAPER = std::clamp(*PFORCEWALLPAPER, static_cast<int64_t>(-1L), static_cast<int64_t>(2L));
 
+    const auto PWALLPAPERPREFIX   = g_pConfigManager->getString("misc:wallpaper");
+
     // release the last tex if exists
     const auto PTEX = &m_mMonitorBGTextures[pMonitor];
     PTEX->destroyTexture();
@@ -1946,7 +1948,7 @@ void CHyprOpenGLImpl::createBGTextureForMonitor(CMonitor* pMonitor) {
 
     // TODO: use relative paths to the installation
     // or configure the paths at build time
-    std::string texPath    = "/usr/share/hyprland/wall_";
+    std::string texPath = PWALLPAPERPREFIX == "" ? "/usr/share/hyprland/wall_" : PWALLPAPERPREFIX;
     std::string prefixes[] = {"", "anime_", "anime2_"};
 
     // get the adequate tex
