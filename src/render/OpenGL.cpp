@@ -1937,7 +1937,7 @@ void CHyprOpenGLImpl::createBGTextureForMonitor(CMonitor* pMonitor) {
 
     const auto         FORCEWALLPAPER = std::clamp(*PFORCEWALLPAPER, static_cast<int64_t>(-1L), static_cast<int64_t>(2L));
 
-    const auto         PWALLPAPERP     = g_pConfigManager->getString("misc:wallpaper");
+    const auto         PWALLPAPER      = g_pConfigManager->getString("misc:wallpaper");
 
     // release the last tex if exists
     const auto PTEX = &m_mMonitorBGTextures[pMonitor];
@@ -1981,7 +1981,7 @@ void CHyprOpenGLImpl::createBGTextureForMonitor(CMonitor* pMonitor) {
     if (!std::filesystem::exists(texPath)) {
         if (PWALLPAPER == "")
             return; // the texture will be empty, oh well. We'll clear with a solid color anyways.
-            
+
         // try local
         texPath = texPath.substr(0, 5) + "local/" + texPath.substr(5);
 
