@@ -11,7 +11,7 @@ legacyrendererdebug:
 	chmod -R 777 ./build
 
 release:
-	cmake --no-warn-unused-cli -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build -G Ninja
+	cmake --no-warn-unused-cli -DCMAKE_SKIP_RPATH=ON -DCMAKE_BUILD_TYPE:STRING=Release -S . -B ./build -G Ninja
 	cmake --build ./build --config Release --target all -j`nproc 2>/dev/null || getconf NPROCESSORS_CONF`
 	chmod -R 777 ./build
 

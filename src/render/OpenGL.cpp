@@ -1928,6 +1928,39 @@ void CHyprOpenGLImpl::renderSplash(cairo_t* const CAIRO, cairo_surface_t* const 
     cairo_surface_flush(CAIROSURFACE);
 }
 
+
+std::string file_exists(std::string path, std::string file) {
+    if (!path.empty() && !file.empty()) {
+        // https://en.cppreference.com/w/cpp/filesystem/path/append
+        auto fullPath = std::filesystem::path(path) / file;
+        Debug::log(LOG, "Checkfor wallpaper in {}", fullPath.c_str());
+
+        if (std::filesystem::exists(fullPath)) {
+            return fullPath;
+        }        
+    }
+
+    return std::string();
+}
+
+std::string xdgDataHome() {
+    std::filesystem::path homePath;
+
+    if (getenv("XDG_DATA_HOME")) {
+        homePath = getenv("XDG_DATA_HOME");
+    } else if (getenv("HOME")) {
+        homePath = getenv("HOME");
+        homePath /= ".local";
+        homePath /= "share";
+    }
+
+    if (!homePath.empty()) {
+        homePath /= "hypr";
+    }
+
+    return homePath;
+}
+
 void CHyprOpenGLImpl::createBGTextureForMonitor(CMonitor* pMonitor) {
     RASSERT(m_RenderData.pMonitor, "Tried to createBGTex without begin()!");
 
@@ -1948,7 +1981,7 @@ void CHyprOpenGLImpl::createBGTextureForMonitor(CMonitor* pMonitor) {
 
     // TODO: use relative paths to the installation
     // or configure the paths at build time
-    std::string texPath = PWALLPAPER == "" ? "/usr/share/hyprland/wall_" : PWALLPAPER;
+    std::string texPath = "wall_";
     std::string prefixes[] = {"", "anime_", "anime2_"};
 
     // get the adequate tex
@@ -1977,16 +2010,17 @@ void CHyprOpenGLImpl::createBGTextureForMonitor(CMonitor* pMonitor) {
         texPath += "2K.png";
     }
 
-    // check if wallpapers exist
-    if (!std::filesystem::exists(texPath)) {
-        if (PWALLPAPER == "")
-            return; // the texture will be empty, oh well. We'll clear with a solid color anyways.
-
-        // try local
-        texPath = texPath.substr(0, 5) + "local/" + texPath.substr(5);
-
-        if (!std::filesystem::exists(texPath))
-            return; // the texture will be empty, oh well. We'll clear with a solid color anyways.
+    // check if wallpapers exist in XDG paths, then local, then share
+    std::string wallpaperPath = file_exists(xdgDataHome(), texPath);
+    if (wallpaperPath.empty()) {
+        wallpaperPath = file_exists("/usr/local/share/hyprland", texPath);
+        if (wallpaperPath.empty()) {
+            wallpaperPath = file_exists("/usr/share/hyprland", texPath);
+            if (wallpaperPath.empty()) {
+                 // the texture will be empty, oh well. We'll clear with a solid color anyways.
+                 return;
+            }
+        }
     }
 
     PTEX->m_vSize = textureSize;
@@ -2013,7 +2047,7 @@ void CHyprOpenGLImpl::createBGTextureForMonitor(CMonitor* pMonitor) {
     m_mMonitorRenderResources[pMonitor].backgroundTexBox = box;
 
     // create a new one with cairo
-    const auto CAIROSURFACE = cairo_image_surface_create_from_png(texPath.c_str());
+    const auto CAIROSURFACE = cairo_image_surface_create_from_png(wallpaperPath.c_str());
     const auto CAIRO        = cairo_create(CAIROSURFACE);
 
     // scale it to fit the current monitor
